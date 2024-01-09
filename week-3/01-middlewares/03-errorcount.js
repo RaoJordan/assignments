@@ -1,5 +1,3 @@
-const request = require('supertest');
-const assert = require('assert');
 const express = require('express');
 
 const app = express();
@@ -22,5 +20,12 @@ app.post('/user', function(req, res) {
 app.get('/errorCount', function(req, res) {
   res.status(200).json({ errorCount });
 });
+
+const errorHandlingMiddleware = (err,req,res,next) => {
+  res.status(404).send({});
+  errorCount = errorCount + 1;
+  next()
+}
+app.use(errorHandlingMiddleware);
 
 module.exports = app;
