@@ -41,9 +41,102 @@
  */
   const express = require('express');
   const bodyParser = require('body-parser');
+  const fs = require("fs");
   
   const app = express();
   
   app.use(bodyParser.json());
+
+  // const allTodos = [];
+
+  app.get('/todos', (req, res) => {
+    fs.readFile("todos.json", "utf-8", (err, data) => {
+      if(err) throw err;
+      res.json(JSON.parse(data))
+    })
+  })
+
+  app.get('/todo/:id', (req, res) => {
+    fs.readFile("todos.json", "utf8", (err, data) => {
+      if(err) throw err;
+      const id = parseInt(req.params.id);
+      const allTodos = JSON.parse(data);
+      const todo = allTodos.find(obj => obj.id === id);
+      if(!todo)
+      {
+        res.sendStatus(404).send();
+      }
+      else{
+        res.json({
+          todo
+        });
+      }
+      })
+  })
+
+  app.post('/todos', (req, res) => {
+    fs.readFile("todos.json", "utf8", (err, data) => {
+      if(err) throw err;
+      const todo = req.body;
+      const newTodo = {
+        id : Math.floor(Math.random()*1000000),
+        title : todo.title,
+        description : todo.description
+      };
+      const allTodos = JSON.parse(data);
+      allTodos.push(newTodo);
+      fs.writeFile("todos.json", JSON.stringify(allTodos), (err) => {
+        if(err) throw err;
+        res.status(201).json(newTodo);
+      });
+    });
+  })
+
+  app.put('/todos/:id', (req, res) => {
+    fs.readFile("todos.json", "utf8", (err, data) => {
+      if(err) throw err;
+      const id = parseInt(req.params.id);
+      const allTodos = JSON.parse(data);
+      const todo = allTodos.find(obj => obj.id === id);
+      const newTodo = req.body;
+      if(!todo)
+      {
+        res.sendStatus(404).send();
+      }
+      else{
+        todo.title = newTodo.title
+        todo.description = newTodo.description
+        fs.writeFile("todos.json", JSON.stringify(allTodos), (err) => {
+          if(err) throw err;
+          res.json(todo);
+        })
+      }
+    })
+  })
+
+  app.delete('/todos/:id', (req, res) => {
+    fs.readFile("todos.json", "utf8", (err, data) => {
+      if(err) throw err;
+      const idToDelete = parseInt(req.params.id);
+      const allTodos = JSON.parse(data);
+      const indexToDelete = allTodos.findIndex(obj => obj.id === idToDelete);
+
+      if (indexToDelete !== -1) {
+        allTodos.splice(indexToDelete, 1);
+        fs.writeFile("todos.json", JSON.stringify(allTodos), (err) => {
+          if(err) throw err;
+          res.json(allTodos);
+        })
+      }
+      else{
+        res.sendStatus(404).send();
+      }
+    })
+  })
+
+  app.use((req, res, next) => {
+    res.status(404).send();
+  });
   
+  app.listen(3000);
   module.exports = app;
